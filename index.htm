@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Тестовое задание</title>
+</head>
+<body>
+<style>
+body {
+	font-family: Arial;
+}
+
+input {
+	border-radius: 5px;
+	text-align: center;
+}
+
+input:disabled {
+	background-color: transparent;
+	border-color: transparent;
+	color: black;
+}
+
+#content {
+	text-align: center;
+	margin: auto;
+	width: 875px;
+}
+
+#inputplacer {
+	margin: 15px 0;
+	padding-top: 100px;
+	position: relative;
+	height: 200px;
+	z-index: 2;
+	text-align: center;
+}
+
+#inputplacer input {
+	width: 30px;
+	height: 25px;
+}
+
+#inputplacer input:disabled {
+	text-align: left;
+}
+
+#sprite {
+	margin: 30px 0;
+	position: relative;
+	background-image: url(sprite.png);
+	background-repeat: no-repeat;
+	background-position: center;
+	width: 100%;
+	height: 83px;
+}
+
+#sprite input {
+	width: 25px;
+	height: 25px;
+	font-size: 16px;
+	z-index: 2;
+}
+
+#input1 {
+	position: absolute;
+	visibility: hidden;
+}
+
+#input2 {
+	position: absolute;
+	visibility: hidden;
+}
+
+#sprite_js {
+	position: absolute;
+	left: 36px;
+	top: 20px;
+	transform: scaleY(-1);
+	transform-origin: top;
+}
+
+.digit {
+	padding: 4px;
+	border-radius: 4px;
+	font-size: 24px;
+	width: 30px;
+}
+
+.box {
+	border-radius: 5px;
+	text-align: center;
+	width: 25px;
+	height: 25px;
+	z-index: 2;
+}
+
+</style>
+<script>
+	// Установка глобальных переменных
+	var angle = 0.25 * Math.PI; // Угол, определяющий изгиб арки -- чем больше угол, тем меньше изгиб (angle = 0.0 ... 0.5 * Math.PI)
+	var arrowangle = 0.15 * Math.PI; // Угол, под которым рисуется стрелка на арке к арке (чем больше угол, тем шире стрелка)
+	var arrowlen = 12; // Длина стрелок
+	var curvethickness = 2; // Толщина линий
+	var curvecolor = "purple"; // Цвет линий
+	
+	// Фаза задачи (1, 2, 3 и 0), начальная фаза 1
+	var phase = 1;
+	
+	// Вспомогательная функция для генерации условия задания (обычный равномерный рандом)
+	function RandFromTo(a, b) {
+		return Math.floor(Math.random() * (b + 1 - a)) + a;
+	}
+	
+	// Покраска
+	function Colorize(id, color, background) {
+		background = (typeof background !== 'undefined') ?  background : false;
+		
+		if (background) {
+			id.style.backgroundColor = color;
+		}
+		else id.style.color = color;
+	}
+	
+	
+	// Инициализируем начальное состояние задания (дожидаемся когда все будет загружено)
+	window.onload = function() {
+		// По условию первое число от 6 до 9, генерируем первое число
+		var a = 6;
+		var b = 9;
+		var AA = RandFromTo(a, b);
+		
+		// Второе число находим из условия, что ответ от 11 до 14
+		var BB = RandFromTo(11 - AA, 14 - AA);
+		
+		// Заполняем элементы на странице условием
+		document.getElementById('first').innerHTML = AA;
+		document.getElementById('second').innerHTML = BB;
+		document.getElementById('answer').innerHTML = '?';
+		
+		// Инпуты
+		input1 = document.getElementById('input1');
+		input2 = document.getElementById('input2');
+		answer = document.getElementById('answer');
+		
+		// Рисуем первую арку и помещаем первый инпут над ней
+		ArrowFromTo(0, AA);
+		FormInput(1, AA, 0);
+		
+		// Фаза 1 (ввод первого числа) Передаем фокус на инпут
+		input1.focus();
+		input1.oninput = function() {
+			if (phase == 1) {
+				// Число введено правильно
+				if (input1.value == AA)
+				{
+					// Переходим ко второй фазе задания (возращаем покраску, меняем фазу, отключаем изменение input1)
+					Colorize(input1, 'black');
+					Colorize(first, 'transparent', true);
+					input1.disabled = true;
+					phase = 2;
+					
+					// Рисуем еще одну арку и выводим инпут
+					ArrowFromTo(AA, AA + BB);
+					FormInput(2, BB, AA);
+					
+					// Фокус на втором инпуте
+					input2.focus();
+				}
+				// Если мы очистили окно, то возвращаем покраску на место
+				else if (input1.value == '') 
+				{
+					Colorize(input1, 'black');
+					Colorize(first, 'transparent', true);
+				}
+				// Иначе число введено неверно и подсвечиваем красным и оранжевым
+				else 
+				{
+					Colorize(input1, 'red');
+					Colorize(first, 'orange', true);
+				}
+			}
+		}
+		
+		// Фаза 2 (ввод второго числа)
+		input2.oninput = function() {
+			if (phase == 2) {
+				// Условия как в первой фазе
+				if (input2.value == BB)
+				{
+					// Переходим к третьей фазе задания (остается последний инпут -- нужно ввести ответ)
+					Colorize(input2, 'black');
+					Colorize(second, 'transparent', true);
+					input2.disabled = true;
+					phase = 3;
+					answer.disabled = false;
+					answer.value = '';
+					answer.focus();
+				}
+				else if (input2.value == '') {
+					Colorize(input2, 'black');
+					Colorize(second, 'transparent', true);
+				}
+				else {
+					Colorize(input2, 'red');
+					Colorize(second, 'orange', true);
+				}
+			}
+		}
+		
+		// Фаза 3 (ввод третьего числа)
+		answer.oninput = function() {
+			if (phase == 3) {
+				// Условия аналогичны
+				if (answer.value == parseInt(AA + BB))
+				{
+					// Задание выполнено
+					Colorize(answer, 'black');
+					answer.disabled = true;
+					phase = 0;
+				}
+				else if (answer.value == '') Colorize(answer, 'black');
+				else Colorize(answer, 'red');
+			}
+		}
+	}
+	
+	// Отрисовка стрелки от числа a до числа b
+	function ArrowFromTo(a, b) {
+		// Координаты начала и ширина (39px шаг одного числа)
+		var Start = 39 * a;
+		var WidthLine = 39 * (b - a);
+		
+		// Объявляем поле для отрисовки
+		var c = document.getElementById('sprite_js');
+		var ctx = c.getContext("2d");
+
+		// Радиус необходимой окружности находим из заданного угла и ширины
+		var rad = WidthLine / 2.0 / Math.cos(angle);
+		
+		// Центр рисования окружности
+		var centerX = WidthLine / 2.0 + Start;
+		var centerY = -rad * Math.sin(angle);
+		
+		// Начинаем рисовать арку
+		ctx.beginPath();
+		ctx.strokeStyle = curvecolor;
+		ctx.lineWidth = curvethickness;
+		
+		// Угол нам необходим, чтобы арка не была половиной окружности (изменяем высоту арки как удобно)
+		ctx.arc(centerX, centerY, rad, angle, Math.PI - angle);
+		
+		// Теперь отрисовываем стрелочку (переходим к началу стрелки -- конец нашей дуги)
+		var StartX = WidthLine + Start;
+		var StartY = 0;
+		
+		// Рисуем правую часть стрелки
+		ctx.moveTo(StartX, StartY);
+		ctx.lineTo(StartX + arrowlen * Math.cos(Math.PI / 2 - arrowangle + angle), StartY + arrowlen * Math.sin(Math.PI / 2 - arrowangle + angle));
+		
+		// Рисуем левую часть стрелки
+		ctx.moveTo(StartX, StartY);
+		ctx.lineTo(StartX + arrowlen * Math.cos(Math.PI / 2 + arrowangle + angle), StartY + arrowlen * Math.sin(Math.PI / 2 + arrowangle + angle));
+		
+		ctx.stroke();
+	}
+	
+	// Вывод инпутов
+	function FormInput(i, size, start)
+	{	
+		radius = 19.5 * size / Math.cos(angle);
+		offset = (1 - Math.sin(angle)) * radius;
+		
+		inputobj = document.getElementById('input' + i);
+		
+		inputobj.style.top = (-inputobj.clientHeight - offset) + "px";
+		inputobj.style.visibility = 'visible';
+		
+		// Центрируем инпут по центру арки
+		inputobj.style.left = (36 + 19.5 * (size + 2 * start) - inputobj.clientWidth / 2.0) + "px";
+	}
+	
+</script>
+<div id="content">
+	<div id="inputplacer">
+		<span id="first" class="digit"></span> 
+		<span class="digit">+</span>
+		<span id="second" class="digit"></span>
+		<span class="digit">=</span>
+		<input id="answer" class="digit" disabled="disabled" type="text" size="2" maxlength="2" value="?">
+	</div>
+	<div id="sprite">
+		<input id="input1" class="box" name="in1" type="text" size="1" maxlength="1" value="">
+		<input id="input2" class="box" name="in2" type="text" size="1" maxlength="1" value="">
+		<canvas id="sprite_js" width="800" height="400"></canvas>
+	</div>
+</div>
+</body>
+</html>
